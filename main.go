@@ -21,5 +21,6 @@ func main() {
 	router.HandleFunc("/game/{roomID}", GetGame).Methods("GET")
 	router.HandleFunc("/create", CreateGame).Queries("name", "{playerName}").Methods("POST")
 	router.HandleFunc("/join/{roomId}", JoinRoom).Queries("name", "{name}").Methods("POST")
+	router.HandleFunc("/{roomId}", RemoveGame).Methods("DELETE")
 	log.Fatal(http.ListenAndServe(":6969", router))
 }

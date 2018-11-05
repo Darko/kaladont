@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -16,6 +15,27 @@ const objectPrefix = "kaladont:"
 type Room struct {
 	ID      string   `json:"id"`
 	Players []Player `json:"players,omitempty"`
+}
+
+func updateRoom(room Room) (interface{}, error) {
+	conn := kt.redis.Get()
+	defer conn.Close()
+
+	b, err := json.Marshal(&room)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = conn.Do("SET", "kaladont:"+room.ID, string(b))
+	return room, err
+}
+
+func removeRoom(roomID string) error {
+	conn := kt.redis.Get()
+	defer conn.Close()
+
+	_, err := conn.Do("DEL", objectPrefix+roomID)
+	return err
 }
 
 // CreateGame Controller
@@ -52,10 +72,7 @@ func GetGame(w http.ResponseWriter, r *http.Request) {
 	defer conn.Close()
 	gameStr, err := redis.String(conn.Do("GET", objectPrefix+roomID))
 
-	fmt.Println(gameStr)
-
 	if err != nil {
-		fmt.Println(err.Error())
 		sendError(w, 500, err.Error())
 		return
 	}
@@ -70,4 +87,24 @@ func GetGame(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sendResp(w, game)
+}
+
+func RemoveGame(w http.ResponseWriter, r *http.Request) {
+	var roomID = mux.Vars(r)["roomId"]
+
+	if roomID == "" {
+		sendError(w, 400, "Missing parameter roomId")
+		return
+	}
+
+	err := removeRoom(roomID)
+
+	if err != nil {
+		sendError(w, 500, "Server shit itself")
+		return
+	}
+
+	sendResp(w, map[string]interface{}{
+		"statusCode": 201,
+	})
 }
