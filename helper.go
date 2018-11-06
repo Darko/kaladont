@@ -37,7 +37,7 @@ func sendError(writer http.ResponseWriter, status int, message string) {
 	writer.WriteHeader(status)
 	error := map[string]interface{}{
 		"error":      http.StatusText(status),
-		"statusCode": 500,
+		"statusCode": status,
 	}
 	if message != "" {
 		error["message"] = message

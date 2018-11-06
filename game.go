@@ -38,6 +38,14 @@ func removeRoom(roomID string) error {
 	return err
 }
 
+func getRoom(roomID string) (string, error) {
+	conn := kt.redis.Get()
+	defer conn.Close()
+
+	room, err := redis.String(conn.Do("GET", objectPrefix+roomID))
+	return room, err
+}
+
 // CreateGame Controller
 func CreateGame(w http.ResponseWriter, r *http.Request) {
 	name := mux.Vars(r)["playerName"]
