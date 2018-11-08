@@ -18,41 +18,31 @@ type Room struct {
 }
 
 func updateRoom(room Room) (interface{}, error) {
-	conn := kt.redis.Get()
-	defer conn.Close()
-
 	b, err := json.Marshal(&room)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = conn.Do("SET", "kaladont:"+room.ID, string(b))
+	// _, err = kt.redis.Do("SET", "kaladont:"+room.ID, string(b))
+	_, err = db.Set(objectPrefix+room.ID, string(b))
 	return room, err
 }
 
 func removeRoom(roomID string) error {
-	conn := kt.redis.Get()
-	defer conn.Close()
-
-	_, err := conn.Do("DEL", objectPrefix+roomID)
+	_, err := db.Delete(objectPrefix + roomID)
 	return err
 }
 
 func getRoom(roomID string) (string, error) {
-	conn := kt.redis.Get()
-	defer conn.Close()
-
-	room, err := redis.String(conn.Do("GET", objectPrefix+roomID))
+	room, err := redis.String(db.Get(objectPrefix + roomID))
 	return room, err
 }
 
 // CreateGame Controller
 func CreateGame(w http.ResponseWriter, r *http.Request) {
-	name := mux.Vars(r)["playerName"]
-	creator := Player{name, 0}
+	var creator Player
+	err := parseBody(r, &creator)
 	room := Room{randomID(5), []Player{creator}}
-	conn := kt.redis.Get()
-	defer conn.Close()
 
 	b, err := json.Marshal(&room)
 	if err != nil {
@@ -60,7 +50,7 @@ func CreateGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = conn.Do("SET", "kaladont:"+room.ID, string(b))
+	_, err = db.Set(objectPrefix+room.ID, string(b))
 	if err != nil {
 		sendError(w, 500, "Redis command failed: "+err.Error())
 		return
@@ -75,10 +65,8 @@ func CreateGame(w http.ResponseWriter, r *http.Request) {
 
 // GetGame controller
 func GetGame(w http.ResponseWriter, r *http.Request) {
-	var roomID = mux.Vars(r)["roomID"]
-	conn := kt.redis.Get()
-	defer conn.Close()
-	gameStr, err := redis.String(conn.Do("GET", objectPrefix+roomID))
+	var roomID = mux.Vars(r)["roomId"]
+	gameStr, err := redis.String(db.Get(objectPrefix + roomID))
 
 	if err != nil {
 		sendError(w, 500, err.Error())
