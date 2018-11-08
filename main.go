@@ -26,9 +26,9 @@ func main() {
 
 	router.HandleFunc("/game/{roomID}", GetGame).Methods("GET")
 	router.HandleFunc("/create", CreateGame).Queries("name", "{playerName}").Methods("POST")
-	router.HandleFunc("/join/{roomId}", JoinRoom).Queries("name", "{name}").Methods("POST")
+	router.HandleFunc("/join/{roomId}", isAuthenticated(JoinRoom)).Queries("name", "{name}").Methods("POST")
 	router.HandleFunc("/{roomId}", RemoveGame).Methods("DELETE")
-	router.HandleFunc("/{roomId}/leave", LeaveRoom).Methods("DELETE")
+	router.HandleFunc("/{roomId}/leave", isAuthenticated(LeaveRoom)).Methods("DELETE")
 
 	// router.
 	log.Fatal(http.ListenAndServe(":6969", handlers.LoggingHandler(os.Stdout, router)))

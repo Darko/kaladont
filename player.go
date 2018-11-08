@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/gorilla/mux"
 )
@@ -16,23 +15,38 @@ type Player struct {
 	Score int32  `json:"score"`
 }
 
-func findPlayer(p []Player, name string) (interface{}, error) {
-	for _, item := range p {
+func findPlayer(p []Player, name string) (interface{}, int, error) {
+	for i, item := range p {
 		if item.Name == name {
-			return item, nil
+			return item, i, nil
 		}
 	}
 
-	return nil, errors.New("Player not found")
+	return nil, -1, errors.New("Player not found")
+}
+
+func removePlayer(p []Player, name string) []Player {
+	_, ind, _ := findPlayer(p, name)
+
+	if ind > -1 {
+		p = append(p[:ind], p[ind+1:]...)
+	}
+
+	return p
 }
 
 // JoinRoom controller
 func JoinRoom(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	var roomID = vars["roomId"]
-	var playerName = vars["name"]
+	var roomID = mux.Vars(r)["roomId"]
+	var player Player
+	var err = parseBody(r, &player)
 
-	if playerName == "" {
+	if err != nil {
+		sendError(w, 500, err.Error())
+		return
+	}
+
+	if player.Name == "" {
 		sendError(w, 400, "Missing parameter: name")
 		return
 	}
@@ -47,10 +61,10 @@ func JoinRoom(w http.ResponseWriter, r *http.Request) {
 	var room Room
 	json.Unmarshal([]byte(result), &room)
 
-	_, err = findPlayer(room.Players, playerName)
+	_, _, err = findPlayer(room.Players, player.Name)
 
 	if err != nil {
-		player := Player{playerName, 0}
+		player := Player{player.Name, 0}
 		room.Players = append(room.Players, player)
 
 		updated, _ := updateRoom(room)
@@ -61,13 +75,39 @@ func JoinRoom(w http.ResponseWriter, r *http.Request) {
 	sendError(w, 400, "Username is taken")
 }
 
+// LeaveRoom controller
 func LeaveRoom(w http.ResponseWriter, r *http.Request) {
-	var authHeader = r.Header.Get("Authorization")
-	var apiKey = strings.Split(authHeader, " ")[1]
+	var roomID = mux.Vars(r)["roomId"]
+	var p = map[string]string{}
+	err := parseBody(r, &p)
 
-	fmt.Println(strings.Fields(authHeader))
-
-	if apiKey == "" {
-		sendError(w, 401, "")
+	if err != nil {
+		sendError(w, 500, err.Error())
+		return
 	}
+
+	room, err := getRoom(roomID)
+	if err != nil {
+		println(err.Error())
+	}
+
+	var _room Room
+	fmt.Println(room)
+	err = json.Unmarshal([]byte(room), &_room)
+
+	if err != nil {
+		println(err.Error())
+	}
+
+	_room.Players = removePlayer(_room.Players, p["name"])
+	_, err = updateRoom(_room)
+
+	if err != nil {
+		sendError(w, 500, err.Error())
+		return
+	}
+
+	sendResp(w, map[string]int{
+		"statusCode": 201,
+	})
 }
