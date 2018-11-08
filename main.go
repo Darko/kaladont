@@ -25,11 +25,11 @@ func main() {
 
 	AuthRouter()
 
-	router.HandleFunc("/games", CreateGame).Methods("POST")
-	router.HandleFunc("/games/{roomId}", GetGame).Methods("GET")
-	router.HandleFunc("/games/{roomId}", RemoveGame).Methods("DELETE")
-	router.HandleFunc("/games/{roomId}/join", isAuthenticated(JoinRoom)).Methods("POST")
-	router.HandleFunc("/games/{roomId}/leave", isAuthenticated(LeaveRoom)).Methods("DELETE")
+	router.HandleFunc("/v1/games", CreateGame).Methods("POST")
+	router.HandleFunc("/v1/games/{roomId}", GetGame).Methods("GET")
+	router.HandleFunc("/v1/games/{roomId}", RemoveGame).Methods("DELETE")
+	router.HandleFunc("/v1/games/{roomId}/join", isAuthenticated(JoinRoom)).Methods("POST")
+	router.HandleFunc("/v1/games/{roomId}/leave", isAuthenticated(LeaveRoom)).Methods("DELETE")
 
 	log.Fatal(http.ListenAndServe(":6969", handlers.LoggingHandler(os.Stdout, router)))
 }
