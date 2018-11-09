@@ -69,6 +69,12 @@ func JoinRoom(w http.ResponseWriter, r *http.Request) {
 
 		updated, _ := updateRoom(room)
 		sendResp(w, updated)
+
+		go socket.BroadcastTo(room.ID, "player:join", map[string]string{
+			"event":   "player:join",
+			"message": "Player joined",
+		})
+
 		return
 	}
 
