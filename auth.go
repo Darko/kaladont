@@ -13,12 +13,15 @@ import (
 
 var jwtSecret = []byte("topsecret")
 
+// AuthRouter creates a subrouter of the main router to handle auth requests
 func AuthRouter() *mux.Router {
 	authRouter := router.PathPrefix("/auth").Subrouter()
 	authRouter.HandleFunc("/login", Authenticate).Methods("POST")
 	return authRouter
 }
 
+// Authenticate authenticates the user upon an http request
+// given theres a name provided, if there's not, an error is returned
 func Authenticate(w http.ResponseWriter, r *http.Request) {
 	var player Player
 	err := parseBody(r, &player)

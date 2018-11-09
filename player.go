@@ -68,13 +68,10 @@ func JoinRoom(w http.ResponseWriter, r *http.Request) {
 		room.Players = append(room.Players, player)
 
 		updated, _ := updateRoom(room)
-		sendResp(w, updated)
-
-		go socket.BroadcastTo(room.ID, "player:join", map[string]string{
-			"event":   "player:join",
-			"message": "Player joined",
+		go socket.BroadcastTo("room:"+room.ID, "player:join", map[string]interface{}{
+			"player": player,
 		})
-
+		sendResp(w, updated)
 		return
 	}
 
@@ -84,7 +81,7 @@ func JoinRoom(w http.ResponseWriter, r *http.Request) {
 // LeaveRoom controller
 func LeaveRoom(w http.ResponseWriter, r *http.Request) {
 	var roomID = mux.Vars(r)["roomId"]
-	var p = map[string]string{}
+	p := map[string]string{}
 	err := parseBody(r, &p)
 
 	if err != nil {

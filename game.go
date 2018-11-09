@@ -85,6 +85,7 @@ func GetGame(w http.ResponseWriter, r *http.Request) {
 	sendResp(w, game)
 }
 
+// RemoveGame removes a game room from redis
 func RemoveGame(w http.ResponseWriter, r *http.Request) {
 	var roomID = mux.Vars(r)["roomId"]
 
