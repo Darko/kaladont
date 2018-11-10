@@ -9,12 +9,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// Player struct
-type Player struct {
-	Name  string `json:"name"`
-	Score int32  `json:"score"`
-}
-
 func findPlayer(p []Player, name string) (interface{}, int, error) {
 	for i, item := range p {
 		if item.Name == name {
@@ -25,7 +19,7 @@ func findPlayer(p []Player, name string) (interface{}, int, error) {
 	return nil, -1, errors.New("Player not found")
 }
 
-func removePlayer(p []Player, name string) []Player {
+func removePlayerByName(p []Player, name string) []Player {
 	_, ind, _ := findPlayer(p, name)
 
 	if ind > -1 {
@@ -33,6 +27,17 @@ func removePlayer(p []Player, name string) []Player {
 	}
 
 	return p
+}
+
+func removePlayerByRollTurn(p []Player, rollValue bool) []Player {
+	res := []Player{}
+	for _, player := range p {
+		if player.HasRolled == rollValue {
+			continue
+		}
+		res = append(res, player)
+	}
+	return res
 }
 
 // JoinRoom controller
@@ -64,7 +69,7 @@ func JoinRoom(w http.ResponseWriter, r *http.Request) {
 	_, _, err = findPlayer(room.Players, player.Name)
 
 	if err != nil {
-		player := Player{player.Name, 0}
+		player := Player{player.Name, 0, false}
 		room.Players = append(room.Players, player)
 
 		updated, _ := updateRoom(room)
@@ -102,7 +107,7 @@ func LeaveRoom(w http.ResponseWriter, r *http.Request) {
 		println(err.Error())
 	}
 
-	_room.Players = removePlayer(_room.Players, p["name"])
+	_room.Players = removePlayerByName(_room.Players, p["name"])
 	_, err = updateRoom(_room)
 
 	if err != nil {

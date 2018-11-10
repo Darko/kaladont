@@ -45,6 +45,7 @@ func sendError(writer http.ResponseWriter, status int, message string) {
 	sendResp(writer, error)
 }
 
+// parseBody parses a request and stores the value in an interface
 func parseBody(r *http.Request, v interface{}) error {
 	return json.NewDecoder(r.Body).Decode(v)
 }

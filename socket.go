@@ -20,7 +20,7 @@ func createSocketServer() *gosocketio.Server {
 	s := gosocketio.NewServer(transport.GetDefaultWebsocketTransport())
 	s.On(gosocketio.OnConnection, func(c *gosocketio.Channel) {
 		log.Println("New websocket connection")
-		c.Emit("connected", nil)
+		c.Emit("connected", "")
 		s.On("subscribe", HandleSubscription)
 		s.On("unsubscribe", HandleUnsubscribe)
 		s.On(gosocketio.OnDisconnection, HandleDisconnect)

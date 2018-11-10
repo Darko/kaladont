@@ -9,13 +9,18 @@
 <body>
 
   <script>
+    var socket;
     window.setup = () => {
       const script = document.createElement('script')
       script.src = "https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"
-      document.body.append(script)
       script.onload = () => {
-        window.socket = io('http://localhost:6969/', { transports: ['websocket'] })
+        socket = io('http://localhost:6969/', { transports: ['websocket'] })
+        socket.on('connected', e => {
+          console.log('nam', e)
+        })
+        window.socket = socket;
       }
+      document.body.append(script)
     }
   </script>
 </body>
