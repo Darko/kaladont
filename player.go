@@ -9,14 +9,14 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func findPlayer(p []Player, name string) (interface{}, int, error) {
+func findPlayer(p []Player, name string) (Player, int, error) {
 	for i, item := range p {
 		if item.Name == name {
 			return item, i, nil
 		}
 	}
 
-	return nil, -1, errors.New("Player not found")
+	return Player{}, -1, errors.New("Player not found")
 }
 
 func removePlayerByName(p []Player, name string) []Player {
@@ -27,17 +27,6 @@ func removePlayerByName(p []Player, name string) []Player {
 	}
 
 	return p
-}
-
-func removePlayerByRollTurn(p []Player, rollValue bool) []Player {
-	res := []Player{}
-	for _, player := range p {
-		if player.HasRolled == rollValue {
-			continue
-		}
-		res = append(res, player)
-	}
-	return res
 }
 
 // JoinRoom controller
@@ -69,7 +58,7 @@ func JoinRoom(w http.ResponseWriter, r *http.Request) {
 	_, _, err = findPlayer(room.Players, player.Name)
 
 	if err != nil {
-		player := Player{player.Name, 0, false}
+		player := Player{player.Name, 0}
 		room.Players = append(room.Players, player)
 
 		updated, _ := updateRoom(room)

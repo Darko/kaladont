@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -34,14 +35,22 @@ func getRoom(roomID string) (string, error) {
 	return room, err
 }
 
+func serveNextPlayer(room *Room) Player {
+	player, _, _ := findPlayer(room.Players, room.CurrentPlayer.Name)
+	room.Players = removePlayerByName(room.Players, room.CurrentPlayer.Name)
+	room.Players = append(room.Players, player)
+	return room.Players[0]
+}
+
 // CreateGame Controller
 func CreateGame(w http.ResponseWriter, r *http.Request) {
 	var creator Player
 	err := parseBody(r, &creator)
 	room := Room{
-		ID:      randomID(5),
-		Players: []Player{creator},
-		Words:   []Word{},
+		ID:            randomID(5),
+		Players:       []Player{creator},
+		Words:         []Word{},
+		CurrentPlayer: creator,
 	}
 
 	b, err := json.Marshal(&room)
@@ -158,6 +167,9 @@ func SubmitWord(w http.ResponseWriter, r *http.Request) {
 	endsWith := strings.Join(s[len(s)-2:], "")
 	_room.Words = append(_room.Words, word)
 	_room.NextWordStartWith = endsWith
+	_room.CurrentPlayer = serveNextPlayer(&_room)
+
+	fmt.Println(_room)
 
 	updated, err := updateRoom(_room)
 
@@ -168,4 +180,22 @@ func SubmitWord(w http.ResponseWriter, r *http.Request) {
 
 	socket.BroadcastTo("room:"+_room.ID, "room:update", _room)
 	sendResp(w, updated)
+}
+
+func ClearWords(w http.ResponseWriter, r *http.Request) {
+	var roomID = mux.Vars(r)["roomId"]
+	room, err := getRoom(roomID)
+
+	if err != nil {
+		sendError(w, http.StatusNotFound, "Room not found")
+		return
+	}
+
+	var _room Room
+	json.Unmarshal([]byte(room), &_room)
+	_room.Words = []Word{}
+	updateRoom(_room)
+	sendResp(w, map[string]int{
+		"statusCode": http.StatusAccepted,
+	})
 }

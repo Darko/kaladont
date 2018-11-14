@@ -49,3 +49,17 @@ func sendError(writer http.ResponseWriter, status int, message string) {
 func parseBody(r *http.Request, v interface{}) error {
 	return json.NewDecoder(r.Body).Decode(v)
 }
+
+type middleware func(http.HandlerFunc) http.HandlerFunc
+
+func chainMiddleware(mw ...middleware) middleware {
+	return func(final http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			last := final
+			for i := len(mw) - 1; i >= 0; i-- {
+				last = mw[i](last)
+			}
+			last(w, r)
+		}
+	}
+}

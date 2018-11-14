@@ -33,6 +33,7 @@ func main() {
 	router.HandleFunc("/v1/games/{roomId}/join", isAuthenticated(JoinRoom)).Methods("POST")
 	router.HandleFunc("/v1/games/{roomId}/leave", isAuthenticated(LeaveRoom)).Methods("DELETE")
 	router.HandleFunc("/v1/games/{roomId}/submit", isAuthenticated(SubmitWord)).Methods("POST")
+	router.HandleFunc("/v1/games/{roomId}/words", chainMiddleware(isAuthenticated)(ClearWords)).Methods("DELETE")
 	router.Handle("/socket.io/", socket)
 	router.Handle("/", http.FileServer(http.Dir("./public"))).Methods("GET")
 

@@ -19,7 +19,6 @@ type Word struct {
 
 // Player struct
 type Player struct {
-	Name      string `json:"name"`
-	Score     int32  `json:"score"`
-	HasRolled bool   `json:"hasRolled"`
+	Name  string `json:"name"`
+	Score int32  `json:"score"`
 }
