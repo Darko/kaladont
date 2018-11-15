@@ -63,3 +63,11 @@ func chainMiddleware(mw ...middleware) middleware {
 		}
 	}
 }
+
+func assign(target *map[string]interface{}, ogs ...map[string]interface{}) {
+	for _, origin := range ogs {
+		for k, v := range origin {
+			(*target)[k] = v
+		}
+	}
+}

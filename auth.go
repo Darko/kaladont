@@ -27,12 +27,12 @@ func Authenticate(w http.ResponseWriter, r *http.Request) {
 	err := parseBody(r, &player)
 
 	if err != nil {
-		sendError(w, 500, err.Error())
+		sendError(w, http.StatusBadRequest, "Invalid payload for user provided")
 		return
 	}
 
 	if player.Name == "" {
-		sendError(w, 400, "Missing property: name")
+		sendError(w, http.StatusBadRequest, "Missing property: name")
 		return
 	}
 
@@ -61,7 +61,7 @@ func isAuthenticated(next http.HandlerFunc) http.HandlerFunc {
 		var t = strings.Split(authHeader, " ")
 
 		if len(t) < 2 {
-			sendError(w, 401, "Invalid token")
+			sendError(w, http.StatusUnauthorized, "Invalid token")
 			return
 		}
 

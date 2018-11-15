@@ -30,6 +30,7 @@ func main() {
 	router.HandleFunc("/v1/games", CreateGame).Methods("POST")
 	router.HandleFunc("/v1/games/{roomId}", GetGame).Methods("GET")
 	router.HandleFunc("/v1/games/{roomId}", RemoveGame).Methods("DELETE")
+	router.HandleFunc("/v1/games/{roomId}/scores", chainMiddleware(parseRoomFromParams)(GetScoreBoard)).Methods("GET")
 	router.HandleFunc("/v1/games/{roomId}/join", isAuthenticated(JoinRoom)).Methods("POST")
 	router.HandleFunc("/v1/games/{roomId}/leave", isAuthenticated(LeaveRoom)).Methods("DELETE")
 	router.HandleFunc("/v1/games/{roomId}/submit", isAuthenticated(SubmitWord)).Methods("POST")

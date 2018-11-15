@@ -29,6 +29,11 @@ func removePlayerByName(p []Player, name string) []Player {
 	return p
 }
 
+func addScore(players *[]Player, playerName string) {
+	_, ind, _ := findPlayer((*players), playerName)
+	(*players)[ind].Score += 3
+}
+
 // JoinRoom controller
 func JoinRoom(w http.ResponseWriter, r *http.Request) {
 	var roomID = mux.Vars(r)["roomId"]
@@ -58,7 +63,7 @@ func JoinRoom(w http.ResponseWriter, r *http.Request) {
 	_, _, err = findPlayer(room.Players, player.Name)
 
 	if err != nil {
-		player := Player{player.Name, 0}
+		player := Player{randomID(16), player.Name, 0}
 		room.Players = append(room.Players, player)
 
 		updated, _ := updateRoom(room)

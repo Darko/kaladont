@@ -2,10 +2,11 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
+	"sort"
 	"strings"
 
+	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
 
 	"github.com/garyburd/redigo/redis"
@@ -46,6 +47,8 @@ func serveNextPlayer(room *Room) Player {
 func CreateGame(w http.ResponseWriter, r *http.Request) {
 	var creator Player
 	err := parseBody(r, &creator)
+	creator.ID = randomID(16)
+
 	room := Room{
 		ID:            randomID(5),
 		Players:       []Player{creator},
@@ -78,18 +81,13 @@ func GetGame(w http.ResponseWriter, r *http.Request) {
 	gameStr, err := redis.String(db.Get(objectPrefix + roomID))
 
 	if err != nil {
-		sendError(w, http.StatusInternalServerError, err.Error())
+		sendError(w, http.StatusNotFound, "Game not found")
 		return
 	}
 
 	b := []byte(gameStr)
 	var game Room
-	err = json.Unmarshal(b, &game)
-
-	if err != nil {
-		sendError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
+	json.Unmarshal(b, &game)
 
 	sendResp(w, game)
 }
@@ -110,7 +108,7 @@ func RemoveGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sendResp(w, map[string]interface{}{
+	sendResp(w, map[string]int{
 		"statusCode": 201,
 	})
 }
@@ -118,12 +116,6 @@ func RemoveGame(w http.ResponseWriter, r *http.Request) {
 // SubmitWord appends a word to the Words slice of Room
 func SubmitWord(w http.ResponseWriter, r *http.Request) {
 	var roomID = mux.Vars(r)["roomId"]
-
-	if roomID == "" {
-		sendError(w, http.StatusBadRequest, "Invalid room")
-		return
-	}
-
 	room, err := getRoom(roomID)
 
 	if err != nil {
@@ -166,10 +158,9 @@ func SubmitWord(w http.ResponseWriter, r *http.Request) {
 
 	endsWith := strings.Join(s[len(s)-2:], "")
 	_room.Words = append(_room.Words, word)
+	addScore(&_room.Players, _room.CurrentPlayer.Name)
 	_room.NextWordStartWith = endsWith
 	_room.CurrentPlayer = serveNextPlayer(&_room)
-
-	fmt.Println(_room)
 
 	updated, err := updateRoom(_room)
 
@@ -198,4 +189,15 @@ func ClearWords(w http.ResponseWriter, r *http.Request) {
 	sendResp(w, map[string]int{
 		"statusCode": http.StatusAccepted,
 	})
+}
+
+func GetScoreBoard(w http.ResponseWriter, r *http.Request) {
+	room := context.Get(r, "room")
+	scores := room.(Room).Players
+
+	sort.SliceStable(scores, func(i, j int) bool {
+		return scores[i].Score > scores[j].Score
+	})
+
+	sendResp(w, scores)
 }

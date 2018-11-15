@@ -19,6 +19,7 @@ type Word struct {
 
 // Player struct
 type Player struct {
+	ID    string `json:"id"`
 	Name  string `json:"name"`
 	Score int32  `json:"score"`
 }
